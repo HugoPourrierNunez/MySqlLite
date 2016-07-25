@@ -10,9 +10,11 @@ t_map_entry *map_entry_create(char* key, char* data)
 }
 
 
-t_map* map_create(int slots, float load_factor,float grow_factor)
+
+
+t_hashmap* map_create(int slots, float load_factor,float grow_factor)
 {
-    t_map *map = (t_map*) malloc(sizeof(t_map));
+    t_hashmap *map = (t_hashmap*) malloc(sizeof(t_hashmap));
 
     map->load_factor=load_factor;
     map->grow_factor=grow_factor;
@@ -41,7 +43,7 @@ int map_hash(char *key)
     return total;
 }
 
-void map_put(t_map *map, char* key, void *value)
+void map_put(t_hashmap *map, char* key, void *value)
 {
     if(!map)
         return;
@@ -60,17 +62,17 @@ void map_put(t_map *map, char* key, void *value)
     *entry=map_entry_create(key,value);
     map->size++;
 
-    if(map->size>=map->slots*map->load_factor)
-        map_resize(map);
+//    if(map->size>=map->slots*map->load_factor)
+//        map_resize(map);
 }
 
 
 
 
-void* map_get(t_map *map, char* key)
+void* map_get(t_hashmap *map, char* key)
 {
     if(!map)
-        return;
+        return NULL;
     int indice = map_hash(key)%map->slots;
     if(map->entres[indice]==0)
         return 0;
@@ -82,7 +84,7 @@ void* map_get(t_map *map, char* key)
     return entry->data;
 }
 
-void map_remove(t_map *map, char* key)
+void map_remove(t_hashmap *map, char* key)
 {
     int indice = map_hash(key)%map->slots;
     if(map->entres[indice]==0)
@@ -103,34 +105,30 @@ void map_remove(t_map *map, char* key)
     }
 }
 
-t_map* map_resize(t_map *map)
+t_hashmap* map_resize(t_hashmap* map)
 {
-    int i;
-
-    int slots = map->slots;
-    map->slots*=map->grow_factor;
-    map->size=0;
-    t_map_entry **entry = malloc(slots*sizeof(t_map_entry*));
-    for(i=0;i<map->slots;i++)
+    if(!map)
     {
-        map->entres[i]=0;
+        return;
+    }
+    // Sauvegarde le début de la map en parametre
+    t_hashmap* stockPremiere = map;
+
+    // Initialisation de la map résultat
+    t_hashmap* newMap = (t_hashmap*)calloc(map->slots * map->grow_factor, sizeof(t_hashmap));
+
+    newMap->grow_factor = map->grow_factor;
+    newMap->size = map->size;
+    newMap->slots = map->slots * 2;
+    newMap->load_factor = map->load_factor;
+
+    // On remplit la nouvelle map
+    int i = 0;
+
+    for(; i < map->size; i++)
+    {
+        map_put(newMap,map->entres[i]->key, map->entres[i]->data);
     }
 
-
-    for(i=0;i<slots;i++)
-    {
-        t_map_entry **map_entry = & (map->entres[i]);
-        while(*map_entry)
-        {
-//            printf("%s\n",(*map_entry)->key);
-            map_put(map,(*map_entry)->key,(*map_entry)->data);
-            map_entry=&(*map_entry)->next;
-        }
-    }
-
-    t_map_entry *tmp = map->entres;
-    map->entres=entry;
-    free(tmp);
-
-    return map;
+    return newMap;
 }
