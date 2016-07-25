@@ -131,6 +131,7 @@ void map_remove(t_hashmap *map, char* key)
         {
             t_map_entry* tmp = (*entry);
             (*entry)=(*entry)->next;
+            free(tmp->key);
             free(tmp);
             map->size--;
             return;

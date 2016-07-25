@@ -7,7 +7,7 @@ int main (int argc, char *argv[])
 //    testHashMap();
 
     t_hashmap *map1 = map_create(6,.7,2);
-    map_put_int(map1,"age", 21);
+    map_put_int(map1,"age", 21555);
     map_put_string(map1, "poid", "69");
 
     t_hashmap *map2 = map_create(6,.7,2);
@@ -20,10 +20,12 @@ int main (int argc, char *argv[])
 
     char *text = JSON_stringify(map);
 
-    printf("%s", text);
+    printf("%s\n", text);
 
-    if(analyseJSON(text)==0)
-        printf("OK");
+    t_hashmap *test = JSON_parse(text);
+    char *text2 = JSON_stringify(map);
+
+    printf("%s\n", text2);
 
     return 0;
 }
