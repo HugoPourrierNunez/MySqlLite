@@ -1,6 +1,6 @@
 #include "HashMap.h"
 
-t_map_entry *map_entry_create(char* key, char* data)
+t_map_entry *map_entry_create(char* key, t_hashmap_data data)
 {
     t_map_entry *new_entry=malloc(sizeof(t_map_entry));
     new_entry->data=data;
@@ -43,7 +43,41 @@ int map_hash(char *key)
     return total;
 }
 
-void map_put(t_hashmap *map, char* key, void *value)
+
+void map_put_string(t_hashmap *map, char* key,char* value)
+{
+    t_hashmap_data data;
+    data.value.text=value;
+    data.type=HASHMAP_TYPE_STRING;
+    map_put(map,key,data);
+}
+
+void map_put_double(t_hashmap *map, char* key, double value)
+{
+    t_hashmap_data data;
+    data.value.flottant=value;
+    data.type=HASHMAP_TYPE_DOUBLE;
+    map_put(map,key,data);
+}
+
+void map_put_int(t_hashmap *map, char* key, int value)
+{
+    t_hashmap_data data;
+    data.value.integer=value;
+    data.type=HASHMAP_TYPE_INT;
+    map_put(map,key,data);
+}
+
+
+void map_put_map(t_hashmap *map, char* key, t_hashmap *value)
+{
+    t_hashmap_data data;
+    data.value.hashmap=value;
+    data.type=HASHMAP_TYPE_MAP;
+    map_put(map,key,data);
+}
+
+void map_put(t_hashmap *map, char* key, t_hashmap_data value)
 {
     if(!map)
         return;
@@ -69,18 +103,18 @@ void map_put(t_hashmap *map, char* key, void *value)
 
 
 
-void* map_get(t_hashmap *map, char* key)
+t_hashmap_data map_get(t_hashmap *map, char* key)
 {
     if(!map)
-        return NULL;
+        return;
     int indice = map_hash(key)%map->slots;
     if(map->entres[indice]==0)
-        return 0;
+        return;
     t_map_entry *entry=map->entres[indice];
     while(strcmp(entry->key,key)!=0 && entry->next!=0)
         entry=entry->next;
     if(strcmp(entry->key,key)!=0)
-        return 0;
+        return ;
     return entry->data;
 }
 

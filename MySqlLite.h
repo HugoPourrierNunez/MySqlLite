@@ -2,6 +2,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <ctype.h>
 #include "HashMap.h"
 #include "MyString.h"
 
@@ -17,7 +18,7 @@ void hashmap_put(t_hashmap* map, char* path, void* value) ;
 // Ex : hashmap_put(map, 'student.rate', 56);
 // hashmap_traverse(map, 'student.rate')
 //56
-
+int analyseJSON(char *text);
 
 
 #endif // DEF_MYSQLLITE
