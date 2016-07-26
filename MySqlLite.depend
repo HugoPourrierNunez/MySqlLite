@@ -20,17 +20,17 @@
 	<stdlib.h>
 	<string.h>
 
-1469491036 source:d:\pc\documents\github\mysqllite\mysqllite.c
+1469500580 source:d:\pc\documents\github\mysqllite\mysqllite.c
 	"MySqlLite.h"
 
-1469489601 d:\pc\documents\github\mysqllite\mysqllite.h
+1469496547 d:\pc\documents\github\mysqllite\mysqllite.h
 	<stdio.h>
 	<stdlib.h>
 	<ctype.h>
 	"HashMap.h"
 	"MyString.h"
 
-1469491287 source:d:\pc\documents\github\mysqllite\main.c
+1469500528 source:d:\pc\documents\github\mysqllite\main.c
 	<stdio.h>
 	<stdlib.h>
 	"MySqlLite.h"

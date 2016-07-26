@@ -78,7 +78,55 @@ char* JSON_stringify(t_hashmap* map)
 }
 
 
-t_hashmap* JSON_parse(char* text)
+t_arg parseArg(char* arg)
+{
+    t_mystr *text=mystr_create(100);
+    t_arg argument;
+    int len = strlen(arg),i;
+    if(len==0 || arg[0]!='-')
+        return ;
+    i=1;
+    while(i<len && arg[i]!='=')
+    {
+        mystr_add_char(text,arg[i]);
+        i++;
+    }
+    if(i>=len && text->length==1)
+        return ;
+    if(strcmp("collection",text->text)==0)
+        argument.type=ARG_TYPE_COLLECTION;
+    else if(strcmp("find",text->text)==0)
+        argument.type=ARG_TYPE_FIND;
+    else if(strcmp("insert",text->text)==0)
+        argument.type=ARG_TYPE_INSERT;
+    else if(strcmp("projection",text->text)==0)
+        argument.type=ARG_TYPE_PROJECTION;
+    else if(strcmp("remove",text->text)==0)
+        argument.type=ARG_TYPE_REMOVE;
+    else if(strcmp("set",text->text)==0)
+        argument.type=ARG_TYPE_SET;
+    else if(strcmp("sort",text->text)==0)
+        argument.type=ARG_TYPE_SORT;
+    else if(strcmp("where",text->text)==0)
+        argument.type=ARG_TYPE_WHERE;
+    else
+        printf("nonfind");
+    mystr_flush(text);
+    i++;
+    while(i<len)
+    {
+        mystr_add_char(text,arg[i]);
+        i++;
+    }
+    if(text->length==1)
+        return ;
+    argument.value=mystr_copy(text);
+
+    return argument;
+}
+
+
+t_hashmap* JSON_full_parse(char* text)
 {
     t_hashmap *map = map_create(100,.7,2);
     t_hashmap *subMap=NULL;
