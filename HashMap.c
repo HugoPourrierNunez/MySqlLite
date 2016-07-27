@@ -1,9 +1,10 @@
 #include "HashMap.h"
 
-t_map_entry *map_entry_create(char* key, t_hashmap_data data)
+t_map_entry *map_entry_create(char* key, void* value, t_hashmap_type type)
 {
     t_map_entry *new_entry=malloc(sizeof(t_map_entry));
-    new_entry->data=data;
+    new_entry->data.type=type;
+    new_entry->data.value=value;
     new_entry->key=key;
     new_entry->next=0;
     return new_entry;
@@ -43,41 +44,7 @@ int map_hash(char *key)
     return total;
 }
 
-
-void map_put_string(t_hashmap *map, char* key,char* value, int multipleKey)
-{
-    t_hashmap_data data;
-    data.value.text=value;
-    data.type=HASHMAP_TYPE_STRING;
-    map_put(map,key,data,0);
-}
-
-void map_put_double(t_hashmap *map, char* key, double value, int multipleKey)
-{
-    t_hashmap_data data;
-    data.value.flottant=value;
-    data.type=HASHMAP_TYPE_DOUBLE;
-    map_put(map,key,data,0);
-}
-
-void map_put_int(t_hashmap *map, char* key, int value, int multipleKey)
-{
-    t_hashmap_data data;
-    data.value.integer=value;
-    data.type=HASHMAP_TYPE_INT;
-    map_put(map,key,data,0);
-}
-
-
-void map_put_map(t_hashmap *map, char* key, t_hashmap *value, int multipleKey)
-{
-    t_hashmap_data data;
-    data.value.hashmap=value;
-    data.type=HASHMAP_TYPE_MAP;
-    map_put(map,key,data,0);
-}
-
-void map_put(t_hashmap *map, char* key, t_hashmap_data value, int multipleKey)
+void map_put(t_hashmap *map, char* key, void* value,t_hashmap_type type, int multipleKey)
 {
     if(!map)
         return;
@@ -88,12 +55,13 @@ void map_put(t_hashmap *map, char* key, t_hashmap_data value, int multipleKey)
     {
         if(multipleKey && strcmp((*entry)->key,key)==0)
         {
-            (*entry)->data=value;
+            (*entry)->data.value=value;
+            (*entry)->data.type=type;
             return;
         }
         entry=&(*entry)->next;
     }
-    *entry=map_entry_create(key,value);
+    *entry=map_entry_create(key,value,type);
     map->size++;
 
 //    if(map->size>=map->slots*map->load_factor)
@@ -162,7 +130,7 @@ t_hashmap* map_resize(t_hashmap* map)
 
     for(; i < map->size; i++)
     {
-        map_put(newMap,map->entres[i]->key, map->entres[i]->data,0);
+        map_put(newMap,map->entres[i]->key, map->entres[i]->data.value,map->entres[i]->data.type,0);
     }
 
     return newMap;

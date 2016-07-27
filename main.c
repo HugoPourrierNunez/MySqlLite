@@ -51,17 +51,20 @@ void testHashMap()
 void testMySqlLite()
 {
     t_hashmap *map1 = map_create(6,.7,2);
-    map_put_int(map1,"age", 21555,0);
-    map_put_string(map1, "poid", "69",0);
+    map_put(map1,"age", 21555,HASHMAP_TYPE_INT,0);
+    map_put(map1, "poid", "69",HASHMAP_TYPE_STRING,0);
 
     t_hashmap *map2 = map_create(6,.7,2);
-    map_put_string(map2,"name", "hugo",0);
-    map_put_string(map2,"name2", "test",0);
-    map_put_double(map2, "note", 17.2,0);
+    map_put(map2,"name", "hugo",HASHMAP_TYPE_STRING,0);
+    map_put(map2,"name2", "test",HASHMAP_TYPE_STRING,0);
+    float f = 17.2f;
+    map_put(map2, "note", f, HASHMAP_TYPE_FLOAT,0);
 
     t_hashmap *map = map_create(6,.7,2);
-    map_put_map(map,"info1", map1,0);
-    map_put_map(map,"info2", map2,0);
+    map_put(map,"info1", map1,HASHMAP_TYPE_MAP,0);
+    map_put(map,"info2", map2,HASHMAP_TYPE_MAP,0);
+
+//    printf("age=%i\n",map_get(map1,"age"));
 
 
 
