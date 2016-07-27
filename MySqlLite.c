@@ -19,9 +19,7 @@ char* JSON_stringify(t_hashmap* map)
             mystr_add(result, "\"");
             mystr_add(result, (*entry)->key);
             mystr_add(result, "\":[");
-            if((*entry)->data.type!=HASHMAP_TYPE_MAP)
-                return NULL;
-            t_hashmap *map2 = (t_hashmap*) (*entry)->data.value;
+            t_hashmap *map2 = (t_hashmap*) (*entry)->data.value.hashmap;
 
             for(j=0; j<map2->slots; j++)
             {
@@ -37,23 +35,22 @@ char* JSON_stringify(t_hashmap* map)
                         if((*entry2)->data.type==HASHMAP_TYPE_STRING)
                         {
                             mystr_add(result,"\"");
-                            mystr_add(result, (*entry2)->data.value);
+                            mystr_add(result, (*entry2)->data.value.text);
                             mystr_add(result, "\"");
                         }
                         else if((*entry2)->data.type==HASHMAP_TYPE_INT)
                         {
                             mystr_add(result," ");
                             char nb[100];
-                            sprintf(nb,"%i",(int) (*entry2)->data.value);
+                            sprintf(nb,"%i",(*entry2)->data.value.integer);
                             mystr_add(result, nb);
                             mystr_add(result, " ");
                         }
-                        else if((*entry2)->data.type==HASHMAP_TYPE_FLOAT)
+                        else if((*entry2)->data.type==HASHMAP_TYPE_DOUBLE)
                         {
-                            printf("in\n\n");
                             mystr_add(result," ");
                             char nb[100];
-                            sprintf(nb,"%f",(*entry2)->data.value);
+                            sprintf(nb,"%lf",(*entry2)->data.value.flottant);
                             mystr_add(result, nb);
                             mystr_add(result, " ");
                         }
@@ -162,11 +159,9 @@ t_hashmap* JSON_full_parse(char* text)
             if(value->length>1)
             {
                 if(point)
-                {
-                    map_put(subMap,mystr_copy(key),atoi(value->text),HASHMAP_TYPE_INT,0);
-                }
+                    map_put_double(subMap,mystr_copy(key),(double) atof(value->text),0);
                 else
-                    map_put(subMap,mystr_copy(key), atoi(value->text),HASHMAP_TYPE_INT,0);
+                    map_put_int(subMap,mystr_copy(key), atoi(value->text),0);
                 nbVal++;
                 point=0;
                 mystr_flush(value);
@@ -227,7 +222,7 @@ t_hashmap* JSON_full_parse(char* text)
 
             if(niveau==1)
             {
-                map_put(map,mystr_copy(collection),subMap,HASHMAP_TYPE_MAP,0);
+                map_put_map(map,mystr_copy(collection),subMap,0);
             }
         }
         else if(c=='[')
@@ -322,7 +317,7 @@ t_hashmap* JSON_full_parse(char* text)
                             printf("12");
                             return NULL;
                         }
-                        map_put(subMap,mystr_copy(key),mystr_copy(value),HASHMAP_TYPE_STRING,0);
+                        map_put_string(subMap,mystr_copy(key),mystr_copy(value),0);
                         mystr_flush(value);
                         mystr_flush(key);
                     }
@@ -382,7 +377,7 @@ t_hashmap* JSON_parse(char* text)
             {
                 nbVal++;
                 point=0;
-                map_put(map,mystr_copy(key),mystr_copy(value),HASHMAP_TYPE_STRING,0);
+                map_put_string(map,mystr_copy(key),mystr_copy(value),0);
                 mystr_flush(key);
                 mystr_flush(value);
             }
@@ -468,7 +463,7 @@ t_hashmap* JSON_parse(char* text)
                     nbVal++;
                     if(nbVal%2==0)
                     {
-                        map_put(map,mystr_copy(key),mystr_copy(value),HASHMAP_TYPE_STRING,0);
+                        map_put_string(map,mystr_copy(key),mystr_copy(value),0);
                         mystr_flush(key);
                         mystr_flush(value);
                     }
