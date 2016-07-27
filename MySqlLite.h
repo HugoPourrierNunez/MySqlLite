@@ -13,7 +13,8 @@ typedef enum {ARG_TYPE_COLLECTION,
             ARG_TYPE_FIND,
             ARG_TYPE_PROJECTION,
             ARG_TYPE_SORT,
-            ARG_TYPE_REMOVE} t_arg_type;
+            ARG_TYPE_REMOVE,
+            ARG_TYPE_DEFAULT} t_arg_type;
 
 
 typedef struct s_arg
@@ -26,7 +27,9 @@ typedef struct s_arg
 t_hashmap* JSON_full_parse(char* string);
 char* JSON_stringify(t_hashmap* map) ;
 int analyseJSON(char *text);
-t_arg parseArg(char* arg);
+t_arg* parseArg(char* arg);
+t_arg* create_arg(t_arg_type type, char* value);
+t_hashmap* JSON_parse(char* text);
 
 
 #endif // DEF_MYSQLLITE

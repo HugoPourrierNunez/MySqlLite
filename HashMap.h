@@ -42,11 +42,11 @@ typedef struct s_hashmap
 
 t_hashmap* map_create(int slots, float load_factor,float grow_factor);
 int map_hash(char *key);
-void map_put(t_hashmap *map, char* key, t_hashmap_data value);
-void map_put_string(t_hashmap *map, char* key,char* value);
-void map_put_double(t_hashmap *map, char* key, double value);
-void map_put_int(t_hashmap *map, char* key, int value);
-void map_put_map(t_hashmap *map, char* key, t_hashmap *value);
+void map_put(t_hashmap *map, char* key, t_hashmap_data value, int multipleKey);
+void map_put_string(t_hashmap *map, char* key,char* value, int multipleKey);
+void map_put_double(t_hashmap *map, char* key, double value, int multipleKey);
+void map_put_int(t_hashmap *map, char* key, int value, int multipleKey);
+void map_put_map(t_hashmap *map, char* key, t_hashmap *value, int multipleKey);
 t_hashmap_data map_get(t_hashmap *map, char* key);
 t_map_entry *map_entry_create(char* key, t_hashmap_data data);
 t_hashmap* map_resize(t_hashmap *map);

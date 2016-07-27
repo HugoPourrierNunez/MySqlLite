@@ -44,40 +44,40 @@ int map_hash(char *key)
 }
 
 
-void map_put_string(t_hashmap *map, char* key,char* value)
+void map_put_string(t_hashmap *map, char* key,char* value, int multipleKey)
 {
     t_hashmap_data data;
     data.value.text=value;
     data.type=HASHMAP_TYPE_STRING;
-    map_put(map,key,data);
+    map_put(map,key,data,0);
 }
 
-void map_put_double(t_hashmap *map, char* key, double value)
+void map_put_double(t_hashmap *map, char* key, double value, int multipleKey)
 {
     t_hashmap_data data;
     data.value.flottant=value;
     data.type=HASHMAP_TYPE_DOUBLE;
-    map_put(map,key,data);
+    map_put(map,key,data,0);
 }
 
-void map_put_int(t_hashmap *map, char* key, int value)
+void map_put_int(t_hashmap *map, char* key, int value, int multipleKey)
 {
     t_hashmap_data data;
     data.value.integer=value;
     data.type=HASHMAP_TYPE_INT;
-    map_put(map,key,data);
+    map_put(map,key,data,0);
 }
 
 
-void map_put_map(t_hashmap *map, char* key, t_hashmap *value)
+void map_put_map(t_hashmap *map, char* key, t_hashmap *value, int multipleKey)
 {
     t_hashmap_data data;
     data.value.hashmap=value;
     data.type=HASHMAP_TYPE_MAP;
-    map_put(map,key,data);
+    map_put(map,key,data,0);
 }
 
-void map_put(t_hashmap *map, char* key, t_hashmap_data value)
+void map_put(t_hashmap *map, char* key, t_hashmap_data value, int multipleKey)
 {
     if(!map)
         return;
@@ -86,7 +86,7 @@ void map_put(t_hashmap *map, char* key, t_hashmap_data value)
     t_map_entry **entry=&(map->entres[indice]);
     while(*entry)
     {
-        if(strcmp((*entry)->key,key)==0)
+        if(multipleKey && strcmp((*entry)->key,key)==0)
         {
             (*entry)->data=value;
             return;
@@ -162,7 +162,7 @@ t_hashmap* map_resize(t_hashmap* map)
 
     for(; i < map->size; i++)
     {
-        map_put(newMap,map->entres[i]->key, map->entres[i]->data);
+        map_put(newMap,map->entres[i]->key, map->entres[i]->data,0);
     }
 
     return newMap;

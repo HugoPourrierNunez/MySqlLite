@@ -11,7 +11,7 @@ char* JSON_stringify(t_hashmap* map)
 
     mystr_add(result, "{");
 
-    for(i=0;i<map->slots;i++)
+    for(i=0; i<map->slots; i++)
     {
         t_map_entry **entry=&(map->entres[i]);
         while(*entry)
@@ -21,7 +21,7 @@ char* JSON_stringify(t_hashmap* map)
             mystr_add(result, "\":[");
             t_hashmap *map2 = (t_hashmap*) (*entry)->data.value.hashmap;
 
-            for(j=0;j<map2->slots;j++)
+            for(j=0; j<map2->slots; j++)
             {
                 t_map_entry **entry2=&(map2->entres[j]);
                 if(*entry2)
@@ -29,7 +29,6 @@ char* JSON_stringify(t_hashmap* map)
                     mystr_add(result, "{");
                     while(*entry2)
                     {
-
                         mystr_add(result, "\"");
                         mystr_add(result, (*entry2)->key);
                         mystr_add(result, "\":");
@@ -78,13 +77,23 @@ char* JSON_stringify(t_hashmap* map)
 }
 
 
-t_arg parseArg(char* arg)
+
+t_arg* create_arg(t_arg_type type, char* value)
+{
+    t_arg *arg = malloc(sizeof(t_arg));
+    arg->type=type;
+    arg->value=value;
+
+    return arg;
+}
+
+t_arg* parseArg(char* arg)
 {
     t_mystr *text=mystr_create(100);
-    t_arg argument;
+    t_arg *argument = create_arg(ARG_TYPE_DEFAULT,NULL);
     int len = strlen(arg),i;
     if(len==0 || arg[0]!='-')
-        return ;
+        return NULL;
     i=1;
     while(i<len && arg[i]!='=')
     {
@@ -92,25 +101,25 @@ t_arg parseArg(char* arg)
         i++;
     }
     if(i>=len && text->length==1)
-        return ;
+        return NULL;
     if(strcmp("collection",text->text)==0)
-        argument.type=ARG_TYPE_COLLECTION;
+        argument->type=ARG_TYPE_COLLECTION;
     else if(strcmp("find",text->text)==0)
-        argument.type=ARG_TYPE_FIND;
+        argument->type=ARG_TYPE_FIND;
     else if(strcmp("insert",text->text)==0)
-        argument.type=ARG_TYPE_INSERT;
+        argument->type=ARG_TYPE_INSERT;
     else if(strcmp("projection",text->text)==0)
-        argument.type=ARG_TYPE_PROJECTION;
+        argument->type=ARG_TYPE_PROJECTION;
     else if(strcmp("remove",text->text)==0)
-        argument.type=ARG_TYPE_REMOVE;
+        argument->type=ARG_TYPE_REMOVE;
     else if(strcmp("set",text->text)==0)
-        argument.type=ARG_TYPE_SET;
+        argument->type=ARG_TYPE_SET;
     else if(strcmp("sort",text->text)==0)
-        argument.type=ARG_TYPE_SORT;
+        argument->type=ARG_TYPE_SORT;
     else if(strcmp("where",text->text)==0)
-        argument.type=ARG_TYPE_WHERE;
+        argument->type=ARG_TYPE_WHERE;
     else
-        printf("nonfind");
+        return NULL;
     mystr_flush(text);
     i++;
     while(i<len)
@@ -119,12 +128,11 @@ t_arg parseArg(char* arg)
         i++;
     }
     if(text->length==1)
-        return ;
-    argument.value=mystr_copy(text);
+        return NULL;
+    argument->value=mystr_copy(text);
 
     return argument;
 }
-
 
 t_hashmap* JSON_full_parse(char* text)
 {
@@ -139,24 +147,29 @@ t_hashmap* JSON_full_parse(char* text)
     t_mystr *collection = mystr_create(100);
 
     if(len==0)
+    {
+        printf("1");
         return NULL;
-    for(i=0;i<len;i++)
+    }
+    for(i=0; i<len; i++)
     {
         while((text[i]==' ' || text[i]=='\n' || text[i]=='\t') && i<len && startTextValue==0)
         {
             i++;
             if(value->length>1)
             {
-//                printf("nb=%s\n",value->text);
+                if(point)
+                    map_put_double(subMap,mystr_copy(key),(double) atof(value->text),0);
+                else
+                    map_put_int(subMap,mystr_copy(key), atoi(value->text),0);
                 nbVal++;
                 point=0;
-                map_put_string(subMap,mystr_copy(key),mystr_copy(value));
-                mystr_flush(key);
                 mystr_flush(value);
+                mystr_flush(key);
             }
         }
         char c = text[i];
-        if(startTextValue && c!='\"' )
+        if(startTextValue && c!='\"')
         {
             if(niveau==1)
             {
@@ -167,9 +180,218 @@ t_hashmap* JSON_full_parse(char* text)
                 if(nbVal%2==0)
                     mystr_add_char(key,c);
                 else
+                {
                     mystr_add_char(value,c);
+                }
+
+            }
+        }
+        if(c=='{')
+        {
+            if(sortieAccolade && !virgule)
+            {
+                printf("2");
+                return NULL;
+            }
+            nbAccolade++;
+            niveau++;
+            sortieAccolade=0;
+            virgule=0;
+
+            if(niveau==2)
+            {
+                subMap = map_create(100,.7,2);
             }
 
+        }
+        else if(c=='}')
+        {
+            if(virgule)
+            {
+                printf("3");
+                return NULL;
+            }
+            if(niveau==2 && nbVal%2!=0)
+            {
+                printf("4");
+                return NULL;
+            }
+            nbAccolade--;
+            niveau--;
+            sortieAccolade=1;
+
+            if(niveau==1)
+            {
+                map_put_map(map,mystr_copy(collection),subMap,0);
+            }
+        }
+        else if(c=='[')
+        {
+            if(niveau!=1)
+            {
+                printf("5");
+                return NULL;
+            }
+            if(!deuxPoint)
+            {
+                printf("6");
+                return NULL;
+            }
+            deuxPoint=0;
+            nbCrochet++;
+            sortieAccolade=0;
+            virgule=0;
+        }
+        else if(c==']')
+        {
+            if(virgule)
+            {
+                printf("7");
+                return NULL;
+            }
+            nbCrochet--;
+            mystr_flush(collection);
+        }
+        else if(c==':')
+        {
+            if(deuxPoint)
+            {
+                printf("8");
+                return NULL;
+            }
+            if(nbVal%2==0 && niveau==2)
+            {
+                printf("9");
+                return NULL;
+            }
+            deuxPoint=1;
+        }
+        else if(isdigit(c) && startTextValue==0)
+        {
+            if(niveau==2 && nbVal%2==1 && deuxPoint)
+            {
+                deuxPoint=0;
+                mystr_add_char(value,c);
+            }
+            else if(value->length>1)
+            {
+                mystr_add_char(value,c);
+            }
+            else if(startTextValue==0)
+            {
+                printf("10");
+                return NULL;
+            }
+        }
+        else if(c=='.')
+        {
+            if(point && value->length==1)
+            {
+                printf("11");
+                return NULL;
+            }
+            if(value->length>1)
+            {
+                mystr_add_char(value,c);
+                point=1;
+            }
+        }
+        else if(c=='\"')
+        {
+            nbGuillemets++;
+            if(nbGuillemets%2==1)
+            {
+                deuxPoint=0;
+                startTextValue=1;
+            }
+            else
+            {
+                startTextValue=0;
+                if(niveau==2)
+                {
+                    nbVal++;
+                    if(nbVal%2==0)
+                    {
+                        if(value->length==1)
+                        {
+                            printf("12");
+                            return NULL;
+                        }
+                        map_put_string(subMap,mystr_copy(key),mystr_copy(value),0);
+                        mystr_flush(value);
+                        mystr_flush(key);
+                    }
+                    else if(key->length==1)
+                    {
+                        printf("16");
+                        return NULL;
+                    }
+                }
+            }
+
+        }
+        else if(c==',')
+        {
+            if(virgule)
+            {
+                printf("13");
+                return NULL;
+            }
+            virgule=1;
+        }
+        else if(!startTextValue)
+        {
+            printf("14");
+            return NULL;
+        }
+    }
+    if(nbAccolade || nbCrochet || nbGuillemets%2)
+    {
+        printf("15");
+        return NULL;
+    }
+
+    return map;
+}
+
+
+t_hashmap* JSON_parse(char* text)
+{
+
+    t_hashmap *map = map_create(100,.7,2);
+
+    int i=0, len=strlen(text), nbAccolade=0,niveau=0,nbGuillemets=0,
+        startTextValue=0, nbVal=0,virgule=0,deuxPoint=0,point=0,sortieAccolade=0;
+
+    t_mystr *value = mystr_create(100);
+    t_mystr *key = mystr_create(100);
+
+    if(len==0)
+        return NULL;
+    for(i=0; i<len; i++)
+    {
+        while((text[i]==' ' || text[i]=='\n' || text[i]=='\t') && i<len && startTextValue==0)
+        {
+            i++;
+            if(value->length>1)
+            {
+                nbVal++;
+                point=0;
+                map_put_string(map,mystr_copy(key),mystr_copy(value),0);
+                mystr_flush(key);
+                mystr_flush(value);
+            }
+        }
+        char c = text[i];
+        if(startTextValue && c!='\'' )
+        {
+            if(niveau==2)
+            {
+                if(nbVal%2==0)
+                    mystr_add_char(key,c);
+                else
+                    mystr_add_char(value,c);
+            }
         }
 
         if(c=='{')
@@ -180,9 +402,6 @@ t_hashmap* JSON_full_parse(char* text)
             niveau++;
             sortieAccolade=0;
             virgule=0;
-
-            if(niveau==2);
-                subMap = map_create(100,.7,2);
         }
         else if(c=='}')
         {
@@ -193,42 +412,18 @@ t_hashmap* JSON_full_parse(char* text)
             nbAccolade--;
             niveau--;
             sortieAccolade=1;
-
-            if(niveau==1)
-            {
-                map_put_map(map,mystr_copy(collection),subMap);
-            }
-        }
-        else if(c=='[')
-        {
-            if(niveau!=1)
-                return NULL;
-            if(!deuxPoint)
-               return NULL;
-            deuxPoint=0;
-            nbCrochet++;
-            sortieAccolade=0;
-            virgule=0;
-        }
-        else if(c==']')
-        {
-            if(virgule)
-                return NULL;
-            nbCrochet--;
-
-            mystr_flush(collection);
         }
         else if(c==':')
         {
             if(deuxPoint)
                 return NULL;
-            if(nbVal%2==0 && niveau==2)
+            if(nbVal%2==0 && niveau==1)
                 return NULL;
             deuxPoint=1;
         }
         else if(isdigit(c) && startTextValue==0)
         {
-            if(niveau==2 && nbVal%2==1 && deuxPoint)
+            if(niveau==1 && nbVal%2==1 && deuxPoint)
             {
                 deuxPoint=0;
                 mystr_add_char(value,c);
@@ -250,7 +445,7 @@ t_hashmap* JSON_full_parse(char* text)
                 point=1;
             }
         }
-        else if(c=='\"')
+        else if(c=='\'')
         {
             nbGuillemets++;
             if(nbGuillemets%2==1)
@@ -263,24 +458,19 @@ t_hashmap* JSON_full_parse(char* text)
                 startTextValue=0;
                 if(value->length==1)
                     return NULL;
-                if(niveau==2)
+                if(niveau==1)
                 {
                     nbVal++;
                     if(nbVal%2==0)
                     {
-                       map_put_string(subMap,mystr_copy(key),mystr_copy(value));
-                       mystr_flush(key);
-                       mystr_flush(value);
+                        map_put_string(map,mystr_copy(key),mystr_copy(value),0);
+                        mystr_flush(key);
+                        mystr_flush(value);
                     }
-                }
-                else if(niveau==1)
-                {
-                    //
                 }
 
                 mystr_flush(value);
             }
-
         }
         else if(c==',')
         {
@@ -291,7 +481,7 @@ t_hashmap* JSON_full_parse(char* text)
         else if(!startTextValue)
             return NULL;
     }
-    if(nbAccolade || nbCrochet || nbGuillemets%2)
+    if(nbAccolade || nbGuillemets%2)
         return NULL;
 
     return map;
@@ -304,14 +494,16 @@ int analyseJSON(char *text)
     t_mystr *value = mystr_create(100);
     if(len==0)
         return -1;
-    for(i=0;i<len;i++)
+    for(i=0; i<len; i++)
     {
+
+        printf("%c",text[i]);
         while((text[i]==' ' || text[i]=='\n' || text[i]=='\t') && i<len && startTextValue==0)
         {
             i++;
+            printf("%c",text[i]);
             if(value->length>1)
             {
-//                printf("nb=%s\n",value->text);
                 nbVal++;
                 point=0;
                 mystr_flush(value);
@@ -347,7 +539,7 @@ int analyseJSON(char *text)
             if(niveau!=1)
                 return -5;
             if(!deuxPoint)
-               return -6;
+                return -6;
             deuxPoint=0;
             nbCrochet++;
             sortieAccolade=0;
