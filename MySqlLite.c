@@ -6,74 +6,78 @@ char* JSON_stringify(t_hashmap* map)
     if(!map)
         return NULL;
 
-    t_mystr *result = mystr_create(1000);
     int i,j;
-
-    mystr_add(result, "{");
-
+    t_mystr *text = mystr_create(1000);
+    mystr_add(text,"{");
     for(i=0; i<map->slots; i++)
     {
         t_map_entry **entry=&(map->entres[i]);
         while(*entry)
         {
-            mystr_add(result, "\"");
-            mystr_add(result, (*entry)->key);
-            mystr_add(result, "\":[");
-            t_hashmap *map2 = (t_hashmap*) (*entry)->data.value.hashmap;
-
-            for(j=0; j<map2->slots; j++)
+            if((*entry))
             {
-                t_map_entry **entry2=&(map2->entres[j]);
-                if(*entry2)
+                if((*entry)->data.type==HASHMAP_TYPE_MAP_LIST)
                 {
-                    mystr_add(result, "{");
-                    while(*entry2)
+                    t_list_chain *mylist = (*entry)->data.value.linked_list;
+                    if(mylist)
                     {
-                        mystr_add(result, "\"");
-                        mystr_add(result, (*entry2)->key);
-                        mystr_add(result, "\":");
-                        if((*entry2)->data.type==HASHMAP_TYPE_STRING)
+                        mystr_add(text,"\"");
+                        mystr_add(text,(*entry)->key);
+                        mystr_add(text,"\"");
+                        mystr_add(text,":[");
+                        while(mylist)
                         {
-                            mystr_add(result,"\"");
-                            mystr_add(result, (*entry2)->data.value.text);
-                            mystr_add(result, "\"");
-                        }
-                        else if((*entry2)->data.type==HASHMAP_TYPE_INT)
-                        {
-                            mystr_add(result," ");
-                            char nb[100];
-                            sprintf(nb,"%i",(*entry2)->data.value.integer);
-                            mystr_add(result, nb);
-                            mystr_add(result, " ");
-                        }
-                        else if((*entry2)->data.type==HASHMAP_TYPE_DOUBLE)
-                        {
-                            mystr_add(result," ");
-                            char nb[100];
-                            sprintf(nb,"%lf",(*entry2)->data.value.flottant);
-                            mystr_add(result, nb);
-                            mystr_add(result, " ");
-                        }
+                            t_hashmap *my_hashmap = mylist->value;
+                            if(my_hashmap)
+                            {
+                                mystr_add(text,"{");
+                                for(j=0; j<my_hashmap->slots; j++)
+                                {
+                                    t_map_entry **entry2=&(my_hashmap->entres[j]);
+                                    while(*entry2)
+                                    {
+                                        if((*entry2))
+                                        {
+                                            char couple[100];
+                                            if((*entry2)->data.type==HASHMAP_TYPE_INT)
+                                            {
+                                                sprintf(couple, "\"%s\":%i ,",(*entry2)->key, (*entry2)->data.value.integer);
+                                                mystr_add(text,couple);
+                                            }
+                                            else if((*entry2)->data.type==HASHMAP_TYPE_DOUBLE)
+                                            {
+                                                sprintf(couple, "\"%s\":%lf ,",(*entry2)->key, (*entry2)->data.value.flottant);
+                                                mystr_add(text,couple);
+                                            }
 
-                        entry2=&(*entry2)->next;
+                                            else if(my_hashmap->entres[j]->data.type==HASHMAP_TYPE_STRING)
+                                            {
+                                                sprintf(couple, "\"%s\":\"%s\" ,",(*entry2)->key, (*entry2)->data.value.text);
+                                                mystr_add(text,couple);
+                                            }
+                                        }
+                                        entry2=&(*entry2)->next;
+                                    }
+
+                                }
+                                mystr_remove(text,1);
+                                mystr_add(text,"},\n");
+                            }
+                            mylist = mylist->next;
+                        }
+                        mystr_remove(text,2);
+                        mystr_add(text,"],\n");
                     }
-                    mystr_add(result, "},\n");
+
                 }
-
             }
-            mystr_remove(result,2);
-            mystr_add(result, "\n");
-            entry = &(*entry)->next;
-            mystr_add(result, "],\n");
+            entry=&(*entry)->next;
         }
-    }
-    mystr_remove(result,2);
-    mystr_add(result, "\n");
-    mystr_add(result, "}");
 
-    char *text = result->text;
-    free(result);
-    return text;
+    }
+    mystr_remove(text,2);
+    mystr_add(text,"}\n");
+    return text->text;
 }
 
 
@@ -162,6 +166,7 @@ t_hashmap* JSON_full_parse(char* text)
                     map_put_double(subMap,mystr_copy(key),(double) atof(value->text),0);
                 else
                     map_put_int(subMap,mystr_copy(key), atoi(value->text),0);
+                virgule--;
                 nbVal++;
                 point=0;
                 mystr_flush(value);
@@ -196,7 +201,7 @@ t_hashmap* JSON_full_parse(char* text)
             nbAccolade++;
             niveau++;
             sortieAccolade=0;
-            virgule=0;
+            virgule--;
 
             if(niveau==2)
             {
@@ -240,7 +245,7 @@ t_hashmap* JSON_full_parse(char* text)
             deuxPoint=0;
             nbCrochet++;
             sortieAccolade=0;
-            virgule=0;
+            virgule;
         }
         else if(c==']')
         {
@@ -318,6 +323,7 @@ t_hashmap* JSON_full_parse(char* text)
                             return NULL;
                         }
                         map_put_string(subMap,mystr_copy(key),mystr_copy(value),0);
+                        virgule--;
                         mystr_flush(value);
                         mystr_flush(key);
                     }
@@ -332,12 +338,7 @@ t_hashmap* JSON_full_parse(char* text)
         }
         else if(c==',')
         {
-            if(virgule)
-            {
-                printf("13");
-                return NULL;
-            }
-            virgule=1;
+            virgule++;
         }
         else if(!startTextValue)
         {
